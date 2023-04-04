@@ -1,129 +1,56 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
 
-# C extensions
-*.so
+# Botning tokeni
+BOT_TOKEN = '6082663018:AAHk2PEckMgJw5fCjMoFMHwyy2NCUFZcx1s'
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# Logger yaratish
+logging.basicConfig(level=logging.INFO)
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# Bot yaratish
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher(bot)
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# Start buyrug'iga javob berish
+@dp.message_handler(commands=['start'])
+async def send_welcome(message: types.Message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    menu_button = types.KeyboardButton(text="Menu")
+    location_button = types.KeyboardButton(text="Manzilni jo'natish", request_location=True)
+    keyboard.add(menu_button, location_button)
+    await message.reply("Assalomu alaykum! Kafe Telegram botiga xush kelibsiz!\nQuyidagi tugmalardan birini tanlang:", reply_markup=keyboard)
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
+# Menuga javob berish
+@dp.message_handler(commands=['menu'])
+async def send_menu(message: types.Message):
+    menu = types.InlineKeyboardMarkup(row_width=2)
+    menu.add(
+        types.InlineKeyboardButton("Burger - 20,000 so'm", callback_data="Burger"),
+        types.InlineKeyboardButton("Pizza - 25,000 so'm", callback_data="Pizza"),
+        types.InlineKeyboardButton("Salat - 15,000 so'm", callback_data="Salat"),
+        types.InlineKeyboardButton("Ko'k", callback_data="Cancel")
+    )
+    await message.reply("Bizning menyuda quyidagi taomlar mavjud. Buyurtmangizni tanlang:", reply_markup=menu)
 
-# Translations
-*.mo
-*.pot
+# Taomlarni buyurtma qilish
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('menu'))
+async def process_callback_menu(callback_query: types.CallbackQuery):
+    await bot.answer_callback_query(callback_query.id)
+    await bot.send_message(callback_query.from_user.id, "Buyurtma qilish uchun quyidagi tugmalardan birini tanlang:", reply_markup=types.ReplyKeyboardRemove())
+    await bot.send_message(callback_query.from_user.id, f"{callback_query.data}ni tanladingiz")
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+# Manzilni jo'natish tugmasiga javob berish
+@dp.message_handler(content_types=['location'])
+async def handle_location(message):
+    location = message.location
+    latitude = location.latitude
+    longitude = location.longitude
 
-# Flask stuff:
-instance/
-.webassets-cache
+    await bot.send_message(chat_id=message.chat.id, text="Manzilingiz qabul qilindi. Ishonchli ko'chaga boramiz.")
 
-# Scrapy stuff:
-.scrapy
+@dp.errors_handler(exception=Exception)
+async def error_handler(update, exception):
+    logging.exception(f"An exception of type {type(exception).__name__} occurred. Arguments: {exception.args}")
+    await update.message.answer("Oops! Something went wrong.")
 
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
